@@ -179,6 +179,21 @@ docs/
 5. Send a full-outage ticket and verify that urgency is `urgent`.
 6. Run the test and coverage commands.
 
+
+## Screenshots
+
+### Swagger — Successful prediction
+![Swagger successful prediction](docs/screenshots/swagger-success.png)
+
+### Swagger — Validation error
+![Swagger validation error](docs/screenshots/swagger-validation.png)
+
+### Docker Compose — Healthy services
+![Docker Compose healthy services](docs/screenshots/docker-compose.png)
+
+### GitHub Actions — CI/CD
+![GitHub Actions CI/CD](docs/screenshots/github-actions.png)
+
 ## Engineering documents
 
 * `BENCHMARKS.md` — measured performance and resource results.
