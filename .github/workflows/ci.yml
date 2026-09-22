@@ -31,8 +31,8 @@ jobs:
         run: mypy src
 
       - name: Architecture check
-        run: lint-imports
-
+        run: PYTHONPATH=src lint-imports
+        
   test:
     runs-on: ubuntu-latest
     needs: lint
