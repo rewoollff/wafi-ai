@@ -1,0 +1,16 @@
+ticket_text,affected_users,category,team,urgency
+"My laptop will not turn on",1,hardware,hardware,medium
+"Keyboard is not working",1,hardware,hardware,low
+"Printer is not working",3,hardware,hardware,medium
+"Application crashes when I open it",1,software,software,medium
+"Cannot log in to the application",5,software,software,medium
+"The whole application is down",100,software,software,urgent
+"Internet is slow",2,network,network,low
+"WiFi connection is unstable",10,network,network,medium
+"Network is unavailable for the whole department",50,network,network,urgent
+"All employees cannot access the network",200,network,network,urgent
+"Mouse stopped working",1,hardware,hardware,low
+"System shows an error when saving",4,software,software,medium
+"Email service is unavailable for everyone",100,software,software,urgent
+"One employee cannot connect to WiFi",1,network,network,low
+"Full service outage affecting all users",500,software,software,urgent
