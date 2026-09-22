@@ -7,12 +7,12 @@ from uuid import uuid4
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 
 from wafi.adapters.model import SklearnTriageModel
 from wafi.config import settings
 from wafi.domain.models import Ticket
 from wafi.service.triage import TriageService
-
 
 service: TriageService | None = None
 
@@ -41,6 +41,8 @@ logger.handlers.clear()
 logger.addHandler(handler)
 logger.propagate = False
 
+class BatchTickets(BaseModel):
+    tickets: list[Ticket]
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -185,3 +187,50 @@ def predict(ticket: Ticket) -> dict[str, object] | JSONResponse:
         },
     }
 
+@app.post("/v1/predict/batch", response_model=None)
+def predict_batch(
+    request: BatchTickets,
+) -> dict[str, object] | JSONResponse:
+    trace_id = str(uuid4())
+
+    if service is None:
+        logger.warning(
+            "Batch prediction requested while service is not ready",
+            extra={"trace_id": trace_id},
+        )
+
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "error",
+                "trace_id": trace_id,
+                "error": {
+                    "code": "NOT_READY",
+                    "message": "Service is not ready",
+                },
+            },
+        )
+
+    decisions = []
+
+    for ticket in request.tickets:
+        decision = service.predict(ticket)
+        decisions.append(
+            {
+                "team": decision.team.value,
+                "urgency": decision.urgency.value,
+            }
+        )
+
+    logger.info(
+        "Batch ticket prediction completed",
+        extra={"trace_id": trace_id},
+    )
+
+    return {
+        "status": "success",
+        "trace_id": trace_id,
+        "data": {
+            "decisions": decisions,
+        },
+    }

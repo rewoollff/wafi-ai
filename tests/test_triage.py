@@ -134,7 +134,7 @@ def test_predict_endpoint():
     assert "team" in body["data"]
     assert "urgency" in body["data"]
 
-    
+
 def test_golden_network_outage_is_urgent():
     model = SklearnTriageModel(Path("models/wafi_model.joblib"))
     service = TriageService(model)
@@ -201,3 +201,75 @@ def test_directional_more_affected_users_does_not_reduce_urgency():
     assert urgency_rank[large_decision.urgency] >= urgency_rank[
         small_decision.urgency
     ]
+
+
+def test_settings_accept_model_path_from_environment(monkeypatch):
+    from wafi.config import Settings
+
+    monkeypatch.setenv(
+        "WAFI_MODEL_PATH",
+        "models/custom_model.joblib",
+    )
+
+    config = Settings()
+
+    assert config.model_path == Path("models/custom_model.joblib")
+
+
+def test_predict_batch_endpoint():
+    with TestClient(app) as client:
+        response = client.post(
+            "/v1/predict/batch",
+            json={
+                "tickets": [
+                    {
+                        "ticket_text": "My laptop will not turn on",
+                        "affected_users": 1,
+                        "category": "hardware",
+                    },
+                    {
+"ticket_text": (
+    "Network is unavailable for the whole department"
+),
+                        "affected_users": 50,
+                        "category": "network",
+                    },
+                ],
+            },
+        )
+
+    assert response.status_code == 200
+
+    body = response.json()
+
+    assert body["status"] == "success"
+    assert "trace_id" in body
+    assert len(body["data"]["decisions"]) == 2
+    assert body["data"]["decisions"][0]["team"] == "hardware"
+    assert body["data"]["decisions"][1]["team"] == "network"
+    assert body["data"]["decisions"][1]["urgency"] == "urgent"
+
+
+def test_predict_batch_rejects_invalid_ticket():
+    with TestClient(app) as client:
+        response = client.post(
+            "/v1/predict/batch",
+            json={
+                "tickets": [
+                    {
+                        "ticket_text": "Network issue",
+                        "affected_users": 0,
+                        "category": "network",
+                    },
+                ],
+            },
+        )
+
+    assert response.status_code == 422
+
+    body = response.json()
+
+    assert body["status"] == "error"
+    assert "trace_id" in body
+    assert body["error"]["code"] == "VALIDATION_ERROR"
+
